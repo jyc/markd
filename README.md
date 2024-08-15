@@ -9,7 +9,7 @@ When you change the input file, not only will the page automatically rebuild,
 but your browser will also automatically refresh.
 
 This isn't supposed to be a Swiss army-knife or a Porsche; there are apps for that.
-I just want to edit my Markdown files in vim and see the output in another window.
+I just want to edit my Markdown files in Vim and see the output in another window.
 
 # Install
 
