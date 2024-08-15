@@ -177,6 +177,13 @@ document.addEventListener('DOMContentLoaded', function() {
     ],
     supportEscapedSpecialCharsInText: true
   });
+
+  // ```math
+  document.querySelectorAll("pre:has(> code.language-math)").forEach((el) => {
+    const tex = el.innerText;
+    katex.render(tex, el);
+    el.classList.add("katex-display");
+  });
 });
 EOF
 
