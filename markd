@@ -189,13 +189,17 @@ document.addEventListener('DOMContentLoaded', function() {
       {left: '\\[', right: '\\]', display: true},
       {left: '\\(', right: '\\)', display: false},
     ],
-    supportEscapedSpecialCharsInText: true
+    supportEscapedSpecialCharsInText: true,
+    throwOnError: false
   });
 
   // ```math
   document.querySelectorAll("pre:has(> code.language-math)").forEach((el) => {
     const tex = el.innerText;
-    katex.render(tex, el);
+    katex.render(tex, el, {
+      throwOnError: false,
+      displayMode: true
+    });
     el.classList.add("katex-display");
   });
 });
