@@ -37,7 +37,6 @@ __build | __sse | __server)
 	base="$3"
 	;;
 *)
-	build=0
 	in="$1"
 	outdir=$(mktemp -d)
 	base="$outdir/$(basename -s .md "$in")"
@@ -52,7 +51,7 @@ case "$mode" in
 __build)
 	#pandoc -f markdown-raw_tex -t html "$in" >"$body" && cat "$prefix" "$body" >"$out"
 	cmark "$in" >"$body"
-  cat "$prefix" "$body" >"$out"
+	cat "$prefix" "$body" >"$out"
 	echo build
 	exit 0
 	;;
@@ -68,7 +67,7 @@ Content-Type: text/event-stream
 retry: 1000
 EOF
 
-  echo "$out" | entr -p printf "event: change\ndata:\n\n"
+	echo "$out" | entr -p printf "event: change\ndata:\n\n"
 
 	exit 0
 	;;
@@ -83,10 +82,10 @@ Content-Length: $(wc -c <"$out")
 
 EOF
 
-  cat "$out"
+	cat "$out"
 
-  exit 0
-  ;;
+	exit 0
+	;;
 esac
 
 cat >"$prefix" <<"EOF"
@@ -161,9 +160,11 @@ pre:has(> code) {
   font-size: 1.1em;
 }
 </style>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous" />
-<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous"></script>
-<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous"></script>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" integrity="sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk" crossorigin="anonymous"></script>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
   // HACK: https://github.com/KaTeX/KaTeX/issues/437#issuecomment-1147314526
