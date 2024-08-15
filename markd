@@ -4,17 +4,20 @@
 port=9999
 sse_port=9998
 
+# https://stackoverflow.com/questions/2618403/how-to-kill-all-subprocesses-of-shell/17615178#comment131341726_26966800
+# I suspect I'm supposed to use process groups for this...
+# OTOH sounds like killing process groups isn't much better: https://news.ycombinator.com/item?id=32733844
+rkill() {
+	for p in $(pgrep -P $1); do
+		rkill $p
+	done
+	kill $1 2>/dev/null
+}
+
 # Kill all child jobs when we exit.
 # https://aweirdimagination.net/2020/06/28/kill-child-jobs-on-script-exit/
 cleanup() {
-	# https://stackoverflow.com/questions/2618403/how-to-kill-all-subprocesses-of-shell/17615178#comment131341726_26966800
-	k() {
-		for p in $(pgrep -P $1); do
-			k $p
-		done
-		kill $1 2>/dev/null
-	}
-	k $$
+	rkill $$
 }
 
 for sig in INT QUIT HUP TERM; do
@@ -67,7 +70,17 @@ Content-Type: text/event-stream
 retry: 1000
 EOF
 
-	echo "$out" | entr -p printf "event: change\ndata:\n\n"
+	# tcpserver closes stdin when the connection is closed.
+	# Exit when the that happens.
+	pid=$$
+	(
+		while read LINE; do
+			# pass
+		done
+		rkill $pid
+	) &
+
+	echo "$out" | entr -n -p printf "event: change\ndata:\n\n"
 
 	exit 0
 	;;
