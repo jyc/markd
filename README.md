@@ -10,7 +10,12 @@ but your browser will also automatically refresh.
 
 This isn't supposed to be a Swiss army-knife or a Porsche; there are apps for that.
 I just want to edit my Markdown files in Vim and see the output in another window.
-... Also if I'm being honest, I wanted to see what it would look like to do this in a shell script (the answer: not especially pretty).
+... Also if I'm being honest, I wanted to see what it would look like to do this in a shell script
+
+The answer: not especially pretty.
+But I needed fewer external dependencies than I expected.
+It's not even clear to me that it would have much been better as a Python script!
+And if POSIX were invented today, I believe it might have had built-in tools to replace entr (inotify is post-POSIX, after all), ucspi-tcp, and even cmark (c.f. troff)!
 
 # Install
 
