@@ -156,8 +156,8 @@ pre:has(> code) {
   border-radius: 4px;
 }
 
-.katex-display > .katex {
-  font-size: 1.1em;
+*:not(.katex-display) > .katex {
+  line-height: 1;
 }
 </style>
 
