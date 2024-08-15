@@ -39,6 +39,7 @@ brew install cmark entr ucspi-tcp
 - Make this work on platforms other than macOS.
 - Get rid of the annoying `zsh terminated` message.
 - Prettier default stylesheet.
+- Save KaTeX locally to support offline use. 
 
 # Prior art
 
