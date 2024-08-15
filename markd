@@ -94,13 +94,13 @@ cat >"$prefix" <<"EOF"
 <html>
 <head>
 <style>
-/* Simple base stylesheet from https://fvsch.com/base-stylesheet */
-
 body {
-  margin: 0;
+  margin: 1em auto;
   padding: 0;
-  font-size: 100%;
-  line-height: 1.5;
+  max-width: 45em;
+  font-size: 15px;
+  font-family: "Charter", "Times New Roman", "Tinos", "Times", serif;
+  line-height: 1.35;
 }
 h1,
 h2,
@@ -108,6 +108,10 @@ h3,
 h4 {
   margin: 1em 0 0.5em;
   line-height: 1.25;
+  font-family: "Fira Sans", "Helvetica", "Arial", sans-serif;
+  code {
+    font-size: 1em;
+  }
 }
 h1 {
   font-size: 2em;
@@ -140,12 +144,21 @@ sub {
   line-height: 0;
 }
 
-/* End base stylesheet */
+code {
+  font-family: "Iosevka", "Iosevka Web", "Courier", "Courier New", monospace;
+  font-size: 0.9em;
+}
 
-body {
-  max-width: 800px;
-  margin-left: auto;
-  margin-right: auto;
+pre:has(> code) {
+  line-height: 1.1;
+  background-color: rgba(0, 0, 0, 0.0078125) !important;
+  color: black;
+  padding: 6px;
+  border-radius: 4px;
+}
+
+.katex-display > .katex {
+  font-size: 1.1em;
 }
 </style>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous" />
@@ -186,6 +199,6 @@ tcpserver -D 127.0.0.1 $sse_port "$0" __sse "$in" "$base" &
 #echo "$base"
 
 url="http://127.0.0.1:$port"
-open "$url"
+#open "$url"
 echo "Serving at $url"
 echo "$1" | entr "$0" __build "$in" "$base"

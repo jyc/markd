@@ -37,8 +37,9 @@ brew install cmark entr ucspi-tcp
 
 - Allow specifying the port!
 - Make this work on platforms other than macOS.
+- See if this can be extended in a clean way to support serving entire
+  directories, like with indoor-wiki.
 - Get rid of the annoying `zsh terminated` message.
-- Prettier default stylesheet.
 - Save KaTeX locally to support offline use. 
 
 # Prior art
