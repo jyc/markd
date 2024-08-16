@@ -22,10 +22,12 @@ And if POSIX were invented today, I believe it might have had built-in tools to 
 Install dependencies:
 
 ```
-brew install cmark entr ucspi-tcp
+brew install cmark-gfm entr ucspi-tcp
 ```
 
-- `cmark` is used for rendering Markdown.
+- `cmark-gfm` is used for rendering Markdown. `cmark-gfm` is GitHub's fork of
+  `cmark`, which I use for extensions like tables. It would be easy to swap it
+  out for `cmark` or even Pandoc.
 - `entr` is used to watch files for changes.
 - `ucspi-tcp` is used to serve the HTML and the [server-sent events](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events)
   endpoint that is used for live-reloading. I wanted to just use `netcat`, but it
@@ -41,10 +43,19 @@ brew install cmark entr ucspi-tcp
   directories, like with indoor-wiki.
 - Get rid of the annoying `zsh terminated` message.
 - Save KaTeX locally to support offline use. 
+- Handle path names with spaces.
+- Support GitHub-style [alert blocks](https://github.com/orgs/community/discussions/16925)?
 
 # Prior art
 
-- [livemd](https://github.com/chrboe/livemd) (2018). No live-reloading.
+- [livemd](https://github.com/chrboe/livemd) (2018). Engineered in an arguably
+  saner way (Go program as opposed to shell script). No live-reloading, though.
 - [indoor-wiki](https://github.com/jyc/indoor-wiki) (2016). By yours truly.
   Much more complicated: for browsing files of Markdown folders. No
   live-reloading. Also depends on OCaml (but avoids shell...).
+
+# FAQ
+
+## Why don't Fira and Iosevka render in Safari?
+
+Safari decided to [totally disable display of user-installed fonts](https://stackoverflow.com/a/63208227).
