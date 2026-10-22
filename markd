@@ -307,6 +307,22 @@ code.hljs {
   text-align: center;
 }
 
+.mermaid-error {
+  padding: 0.75em 1em;
+  border: 1px solid #e6b8b8;
+  border-radius: 4px;
+  background: #fff6f6;
+  color: #9b1c1c;
+  text-align: left;
+}
+
+.mermaid-error pre {
+  margin: 0.5em 0 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 0.85em;
+}
+
 :root:not(.mermaid-loading) .mermaid,
 :root:not(.mermaid-loading) pre:has(> code.language-mermaid) {
   animation: mermaid-fade-in 100ms ease-out both;
@@ -375,6 +391,16 @@ function rememberMermaidHeights() {
   }
 }
 
+function showMermaidError(diagram, title, error) {
+  diagram.classList.add('mermaid-error');
+  diagram.setAttribute('role', 'alert');
+  const heading = document.createElement('strong');
+  heading.textContent = title;
+  const message = document.createElement('pre');
+  message.textContent = error?.message || error?.str || String(error);
+  diagram.replaceChildren(heading, message);
+}
+
 // Reserve space as the parser adds code blocks, before the first paint.
 const mermaidPlaceholderObserver = new MutationObserver(reserveMermaidHeights);
 mermaidPlaceholderObserver.observe(document.documentElement, { childList: true, subtree: true });
@@ -419,33 +445,36 @@ document.addEventListener('DOMContentLoaded', async function() {
     hljs.highlightAll();
 
     if (mermaidBlocks.length) {
+      const diagrams = mermaidBlocks.map(code => {
+        const pre = code.parentElement;
+        const diagram = document.createElement('div');
+        diagram.className = 'mermaid';
+        if (pre.classList.contains('mermaid-placeholder')) {
+          diagram.classList.add('mermaid-placeholder');
+          diagram.style.setProperty('--mermaid-height', pre.style.getPropertyValue('--mermaid-height'));
+        }
+        diagram.textContent = code.textContent;
+        pre.replaceWith(diagram);
+        return diagram;
+      });
       try {
         const { default: mermaid } = await import('https://cdn.jsdelivr.net/npm/mermaid@12.2.0/dist/mermaid.esm.min.mjs');
         mermaid.initialize({ startOnLoad: false, securityLevel: 'strict', suppressErrorRendering: true });
-        for (const code of mermaidBlocks) {
-          const pre = code.parentElement;
-          const diagram = document.createElement('div');
-          diagram.className = 'mermaid';
-          if (pre.classList.contains('mermaid-placeholder')) {
-            diagram.classList.add('mermaid-placeholder');
-            diagram.style.setProperty('--mermaid-height', pre.style.getPropertyValue('--mermaid-height'));
-          }
-          diagram.textContent = code.textContent;
-          pre.replaceWith(diagram);
+        for (const diagram of diagrams) {
           try {
             await mermaid.run({ nodes: [diagram] });
           } catch (error) {
-            // Keep invalid diagrams readable while editing, and render the rest.
-            diagram.replaceWith(pre);
+            showMermaidError(diagram, 'Could not render Mermaid diagram', error);
             console.error('Could not render Mermaid diagram:', error);
           }
         }
       } catch (error) {
+        diagrams.forEach(diagram => showMermaidError(diagram, 'Could not load Mermaid', error));
         console.error('Could not load Mermaid:', error);
       }
     }
   } finally {
-    // Also reveal source if rendering or a CDN dependency fails.
+    // Release reserved heights for both diagrams and error messages.
     document.documentElement.classList.remove('mermaid-loading');
     rememberMermaidHeights();
     const diagrams = document.querySelectorAll('.mermaid, pre:has(> code.language-mermaid)');
