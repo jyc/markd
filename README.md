@@ -4,13 +4,14 @@
 markd path/to/file.md
 ```
 
-Now `http://localhost:9999` will show `file.md` rendered to HTML with LaTeX support via [KaTeX](https://katex.org/).
+Now `http://localhost:9999` will show `file.md` rendered to HTML with LaTeX support via [KaTeX](https://katex.org/)
+and diagrams via [Mermaid](https://mermaid.js.org/).
 When you change the input file, not only will the page automatically rebuild,
 but your browser will also automatically refresh.
 
 This isn't supposed to be a Swiss army-knife or a Porsche; there are apps for that.
 I just want to edit my Markdown files in Vim and see the output in another window.
-... Also if I'm being honest, I wanted to see what it would look like to do this in a shell script
+... Also if I'm being honest, I wanted to see what it would look like to do this in a shell script.
 
 The answer: not especially pretty.
 But I needed fewer external dependencies than I expected.

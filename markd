@@ -123,11 +123,15 @@ EOF
 	;;
 esac
 
+# Keep layout caches separate even when documents have the same basename.
+document_id=$(printf '%s' "${in:A}" | cksum)
+
 cat >"$prefix" <<EOF
 <!DOCTYPE html>
 <html>
 <head>
 <title>$slug - markd</title>
+<meta name="markd-document" content="$document_id">
 <style>
 body {
   margin: 1em auto;
@@ -284,46 +288,171 @@ pre code.hljs {
 code.hljs {
   background: none !important;
 }
+
+/* Keep source and intermediate SVGs out of the first paint without losing layout. */
+.mermaid-loading pre:has(> code.language-mermaid),
+.mermaid-loading .mermaid {
+  visibility: hidden;
+}
+
+.mermaid-loading .mermaid-placeholder {
+  box-sizing: border-box;
+  height: var(--mermaid-height);
+  overflow: hidden;
+}
+
+.mermaid {
+  margin: 1em 0;
+  overflow-x: auto;
+  text-align: center;
+}
+
+:root:not(.mermaid-loading) .mermaid,
+:root:not(.mermaid-loading) pre:has(> code.language-mermaid) {
+  animation: mermaid-fade-in 100ms ease-out both;
+}
+
+@keyframes mermaid-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root:not(.mermaid-loading) .mermaid,
+  :root:not(.mermaid-loading) pre:has(> code.language-mermaid) {
+    animation: none;
+  }
+}
 </style>
 
-<!-- KaTeX 0.16.11 -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+" crossorigin="anonymous">
-<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" integrity="sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg" crossorigin="anonymous"></script>
-<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk" crossorigin="anonymous"></script>
+<!-- KaTeX 0.19.0 -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.19.0/dist/katex.min.css" integrity="sha384-3rdsX6e5mueWyoweR9NIVmtEsUkokpBT/0ALqKKIBMr9j4qhHkaIkAcGgsE6uVlp" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.19.0/dist/katex.min.js" integrity="sha384-QFFtAGzvvj+bfgCGxXJlNZZR1nXEZgvG8tDLCCY1F19xl20WlfTYgguB4VcNdxYk" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.19.0/dist/contrib/auto-render.min.js" integrity="sha384-bjyGPfbij8/NDKJhSGZNP/khQVgtHUE5exjm4Ydllo42FwIgYsdLO2lXGmRBf5Mz" crossorigin="anonymous"></script>
 
-<!-- highlight.js 11.9.0 -->
-<link rel="stylesheet" href="https://unpkg.com/@highlightjs/cdn-assets@11.9.0/styles/github.min.css">
-<script src="https://unpkg.com/@highlightjs/cdn-assets@11.9.0/highlight.min.js"></script>
-<script src="https://unpkg.com/@highlightjs/cdn-assets@11.9.0/languages/elixir.min.js"></script>
+<!-- highlight.js 11.12.0 -->
+<link rel="stylesheet" href="https://unpkg.com/@highlightjs/cdn-assets@11.12.0/styles/github.min.css">
+<script src="https://unpkg.com/@highlightjs/cdn-assets@11.12.0/highlight.min.js"></script>
+<script src="https://unpkg.com/@highlightjs/cdn-assets@11.12.0/languages/elixir.min.js"></script>
 EOF
 
 cat >>"$prefix" <<"EOF"
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-  // HACK: https://github.com/KaTeX/KaTeX/issues/437#issuecomment-1147314526
-  document.body.innerHTML = document.body.innerHTML.replace(/\\\$/g, '<span>$</span>');
-  renderMathInElement(document.body, {
-    delimiters: [
-      {left: '$$', right: '$$', display: true},
-      {left: '$', right: '$', display: false},
-      {left: '\\[', right: '\\]', display: true},
-      {left: '\\(', right: '\\)', display: false},
-    ],
-    supportEscapedSpecialCharsInText: true,
-    throwOnError: false
-  });
+document.documentElement.classList.add('mermaid-loading');
 
-  // ```math
-  document.querySelectorAll("pre:has(> code.language-math)").forEach((el) => {
-    const tex = el.innerText;
-    katex.render(tex, el, {
-      throwOnError: false,
-      displayMode: true
+const mermaidHeightKey = 'markd:mermaid-heights:' +
+  document.querySelector('meta[name="markd-document"]').content;
+let mermaidHeights = [];
+try {
+  const cached = JSON.parse(sessionStorage.getItem(mermaidHeightKey));
+  if (cached?.width === window.innerWidth && Array.isArray(cached.heights)) {
+    mermaidHeights = cached.heights;
+  }
+} catch (error) {
+  // Storage may be unavailable, or a previous cache entry may be invalid.
+}
+
+function reserveMermaidHeights() {
+  document.querySelectorAll('pre > code.language-mermaid').forEach((code, i) => {
+    const height = mermaidHeights[i];
+    if (Number.isFinite(height) && height > 0) {
+      const pre = code.parentElement;
+      pre.classList.add('mermaid-placeholder');
+      pre.style.setProperty('--mermaid-height', height + 'px');
+    }
+  });
+}
+
+function rememberMermaidHeights() {
+  const heights = Array.from(
+    document.querySelectorAll('.mermaid, pre:has(> code.language-mermaid)'),
+    el => el.getBoundingClientRect().height
+  );
+  try {
+    sessionStorage.setItem(mermaidHeightKey, JSON.stringify({ width: window.innerWidth, heights }));
+  } catch (error) {
+    // Rendering still works when storage is disabled or full.
+  }
+}
+
+// Reserve space as the parser adds code blocks, before the first paint.
+const mermaidPlaceholderObserver = new MutationObserver(reserveMermaidHeights);
+mermaidPlaceholderObserver.observe(document.documentElement, { childList: true, subtree: true });
+
+document.addEventListener('DOMContentLoaded', async function() {
+  mermaidPlaceholderObserver.disconnect();
+  reserveMermaidHeights();
+  try {
+    // Preserve diagram source across the escaped-dollar workaround below.
+    const mermaidSources = Array.from(
+      document.querySelectorAll('pre > code.language-mermaid'), el => el.textContent
+    );
+
+    // HACK: https://github.com/KaTeX/KaTeX/issues/437#issuecomment-1147314526
+    document.body.innerHTML = document.body.innerHTML.replace(/\\\$/g, '<span>$</span>');
+    renderMathInElement(document.body, {
+      delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+        {left: '\\[', right: '\\]', display: true},
+        {left: '\\(', right: '\\)', display: false},
+      ],
+      supportEscapedSpecialCharsInText: true,
+      throwOnError: false
     });
-    el.classList.add("katex-display");
-  });
 
-  hljs.highlightAll();
+    // ```math
+    document.querySelectorAll("pre:has(> code.language-math)").forEach((el) => {
+      const tex = el.innerText;
+      katex.render(tex, el, {
+        throwOnError: false,
+        displayMode: true
+      });
+      el.classList.add("katex-display");
+    });
+
+    const mermaidBlocks = Array.from(document.querySelectorAll('pre > code.language-mermaid'));
+    mermaidBlocks.forEach((el, i) => {
+      el.textContent = mermaidSources[i];
+      el.classList.add('nohighlight');
+    });
+    hljs.highlightAll();
+
+    if (mermaidBlocks.length) {
+      try {
+        const { default: mermaid } = await import('https://cdn.jsdelivr.net/npm/mermaid@12.2.0/dist/mermaid.esm.min.mjs');
+        mermaid.initialize({ startOnLoad: false, securityLevel: 'strict', suppressErrorRendering: true });
+        for (const code of mermaidBlocks) {
+          const pre = code.parentElement;
+          const diagram = document.createElement('div');
+          diagram.className = 'mermaid';
+          if (pre.classList.contains('mermaid-placeholder')) {
+            diagram.classList.add('mermaid-placeholder');
+            diagram.style.setProperty('--mermaid-height', pre.style.getPropertyValue('--mermaid-height'));
+          }
+          diagram.textContent = code.textContent;
+          pre.replaceWith(diagram);
+          try {
+            await mermaid.run({ nodes: [diagram] });
+          } catch (error) {
+            // Keep invalid diagrams readable while editing, and render the rest.
+            diagram.replaceWith(pre);
+            console.error('Could not render Mermaid diagram:', error);
+          }
+        }
+      } catch (error) {
+        console.error('Could not load Mermaid:', error);
+      }
+    }
+  } finally {
+    // Also reveal source if rendering or a CDN dependency fails.
+    document.documentElement.classList.remove('mermaid-loading');
+    rememberMermaidHeights();
+    const diagrams = document.querySelectorAll('.mermaid, pre:has(> code.language-mermaid)');
+    const resizeObserver = new ResizeObserver(rememberMermaidHeights);
+    diagrams.forEach(el => resizeObserver.observe(el));
+    window.addEventListener('resize', rememberMermaidHeights);
+  }
 });
 EOF
 
